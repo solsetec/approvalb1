@@ -27,7 +27,7 @@
         .card {
             background: #ffffff;
             border-radius: 12px;
-            box-shadow: 0 4px M20px rgba(0, 0, 0, 0.05);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
             padding: 2rem 3rem;
             max-width: 500px;
             width: 100%;
@@ -108,6 +108,12 @@
             transform: translateY(-2px);
             box-shadow: 0 4px 12px rgba(0,0,0,0.1);
         }
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
 
         .btn-approve {
             background-color: #10b981; /* Verde */
@@ -118,7 +124,33 @@
             background-color: #ef4444; /* Rojo */
             color: white;
         }
+
+        /* --- ESTILOS DE ESTADO --- */
         
+        .card.approved h1 {
+            color: #10b981;
+        }
+        .card.rejected h1 {
+            color: #ef4444;
+        }
+        .card.reused h1,
+        .card.error h1,
+        .card.invalid-token h1 {
+            color: #f59e0b; /* Amarillo/Naranja de advertencia */
+        }
+
+        .card.approved .icon svg {
+            stroke: #10b981;
+        }
+        .card.rejected .icon svg {
+            stroke: #ef4444;
+        }
+        .card.reused .icon svg,
+        .card.error .icon svg,
+        .card.invalid-token .icon svg {
+            stroke: #f59e0b;
+        }
+
         /* --- ANIMACIONES Y MEDIA QUERIES --- */
         
         @keyframes fadeIn {
@@ -160,7 +192,7 @@
     </style>
 </head>
 <body>
-    <div class="card">
+    <div class="card" id="main-card">
         <div id="form-container">
             <div class="icon" id="form-icon">
                 <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -184,39 +216,57 @@
             </form>
         </div>
         
-        <div id="mensajeFinal" style="display:none;">
-            <div class="icon" id="success-icon">
-                <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" style="stroke: #10b981;">
-                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                 </svg>
-            </div>
-            <h1>¡Gracias!</h1>
-            <p>Tu respuesta ha sido registrada correctamente. Ya puedes cerrar esta ventana.</p>
+        <div id="status-container" style="display:none;">
+            <div class="icon" id="status-icon">
+                </div>
+            <h1 id="status-title"></h1>
+            <p id="status-message"></p>
         </div>
-        
-        <div id="mensajeError" style="display:none;">
-            <div class="icon" id="error-icon">
-                <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" style="stroke: #f59e0b;">
-                    <path d="M12 9v2m0 4h.01M10.29 3.86l-8 14A1 1 0 003 19h18a1 1 0 00.87-1.5l-8-14a1 1 0 00-1.74 0z"/>
-                </svg>
-            </div>
-             <h1>Error</h1>
-             <p>No se pudo procesar tu solicitud. Por favor, contacta al administrador.</p>
-        </div>
-
     </div>
 
     <script>
+        const statusSVGs = {
+            approved: '<svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path d="M5 13l4 4L19 7" /></svg>',
+            rejected: '<svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path d="M6 18L18 6M6 6l12 12" /></svg>',
+            reused: '<svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path d="M12 9v2m0 4h.01M10.29 3.86l-8 14A1 1 0 003 19h18a1 1 0 00.87-1.5l-8-14a1 1 0 00-1.74 0z"/></svg>',
+            invalidtoken: '<svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path d="M12 9v2m0 4h.01M10.29 3.86l-8 14A1 1 0 003 19h18a1 1 0 00.87-1.5l-8-14a1 1 0 00-1.74 0z"/></svg>',
+            error: '<svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path d="M12 9v2m0 4h.01M10.29 3.86l-8 14A1 1 0 003 19h18a1 1 0 00.87-1.5l-8-14a1 1 0 00-1.74 0z"/></svg>'
+        };
+
+        const statusMessages = {
+            approved: { title: '¡Documento aprobado correctamente!', message: 'Tu respuesta ha sido registrada. Puedes cerrar esta pestaña.' },
+            rejected: { title: '¡Documento rechazado!', message: 'Tu respuesta ha sido registrada. Puedes cerrar esta pestaña.' },
+            reused: { title: 'Enlace ya utilizado', message: 'Esta solicitud ya ha sido procesada. Ya no se puede tomar una decisión.' },
+            invalidtoken: { title: 'Enlace inválido', message: 'El token de autorización es incorrecto o ha expirado. Por favor, verifica el enlace.' },
+            error: { title: 'Error', message: 'No se pudo procesar tu solicitud. Por favor, contacta al administrador.' }
+        };
+
+        function showStatus(status) {
+            const formContainer = document.getElementById('form-container');
+            const statusContainer = document.getElementById('status-container');
+            const mainCard = document.getElementById('main-card');
+
+            formContainer.style.display = 'none';
+            statusContainer.style.display = 'block';
+
+            mainCard.classList.add(status);
+            
+            const statusTitle = document.getElementById('status-title');
+            const statusMessage = document.getElementById('status-message');
+            const statusIcon = document.getElementById('status-icon');
+
+            statusTitle.innerText = statusMessages[status].title;
+            statusMessage.innerText = statusMessages[status].message;
+            statusIcon.innerHTML = statusSVGs[status];
+        }
+
         window.onload = function() {
             const params = new URLSearchParams(window.location.search);
             const token = params.get('token');
             const decisionInicial = params.get('decision_inicial');
 
             if (!token) {
-                document.getElementById('form-container').style.display = 'none';
-                const errorMsg = document.getElementById('mensajeError');
-                errorMsg.style.display = 'block';
-                errorMsg.querySelector('p').innerText = "Falta el token de autorización. Este enlace es inválido.";
+                showStatus('invalidtoken');
                 return;
             }
 
@@ -228,10 +278,10 @@
             
             if (decisionInicial === 'approved') {
                 cardTitle.innerText = 'Confirmar Aprobación';
-                btnRechazar.style.opacity = '0.6'; // Atenúa el botón no seleccionado
+                btnRechazar.style.opacity = '0.6';
             } else if (decisionInicial === 'rejected') {
                 cardTitle.innerText = 'Confirmar Rechazo';
-                btnAprobar.style.opacity = '0.6'; // Atenúa el botón no seleccionado
+                btnAprobar.style.opacity = '0.6';
             }
             
             btnAprobar.onclick = function() {
@@ -245,74 +295,34 @@
             };
         };
 
-function submitForm() {
-    // Deshabilitar botones para evitar doble envío
-    document.getElementById('btnAprobar').disabled = true;
-    document.getElementById('btnRechazar').disabled = true;
+        function submitForm() {
+            document.getElementById('btnAprobar').disabled = true;
+            document.getElementById('btnRechazar').disabled = true;
 
-    const webhookURL = 'https://webhook-solsetec.tangara.cloud/webhook/8209b5ad-458f-4140-a034-6f73e01d2db9'; // <-- ¡IMPORTANTE! Pega aquí la URL de tu webhook N8N
-    
-    const form = document.getElementById('decisionForm');
-    const formData = new FormData(form);
-    const data = Object.fromEntries(formData.entries());
+            const webhookURL = 'https://webhook-solsetec.tangara.cloud/webhook/8209b5ad-458f-4140-a034-6f73e01d2db9';
+            
+            const form = document.getElementById('decisionForm');
+            const formData = new FormData(form);
+            const data = Object.fromEntries(formData.entries());
 
-    fetch(webhookURL, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data)
-    })
-    .then(response => {
-        if (response.ok) {
-            // La petición fue exitosa (status 200 OK)
-            // Leemos el header 'redirect' de la respuesta del servidor.
-            const redirectTarget = response.headers.get('redirect');
-
-            // Definimos las URLs de destino
-            const baseUrl = 'https://solsetec.github.io/approvalb1/';
-            const urlReused = baseUrl + 'reused.html';
-            const urlApproved = baseUrl + 'approved.html';
-            const urlRejected = baseUrl + 'rejected.html';
-            const urlInvalidToken = baseUrl + 'invalidtoken.html'; // <-- Nueva URL para el token inválido
-
-            // Usamos un switch para decidir a dónde redirigir
-            switch (redirectTarget) {
-                case 'approved':
-                    window.location.href = urlApproved;
-                    break;
-                case 'rejected':
-                    window.location.href = urlRejected;
-                    break;
-                case 'reused':
-                    window.location.href = urlReused;
-                    break;
-                case 'invalidtoken': // <-- Nuevo caso para manejar el token inválido
-                    window.location.href = urlInvalidToken;
-                    break;
-                default:
-                    // Si el header no viene o es un valor inesperado, mostramos un mensaje genérico.
-                    console.log("Header 'redirect' no encontrado o inválido. Mostrando mensaje de éxito genérico.");
-                    document.getElementById('form-container').style.display = 'none';
-                    document.getElementById('mensajeFinal').style.display = 'block';
-                    break;
-            }
-        } else {
-            // Si hay un error del servidor, lo mostramos
-            document.getElementById('form-container').style.display = 'none';
-            document.getElementById('mensajeError').style.display = 'block';
+            fetch(webhookURL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            })
+            .then(response => {
+                if (response.ok) {
+                    const redirectTarget = response.headers.get('redirect');
+                    showStatus(redirectTarget || 'approved');
+                } else {
+                    showStatus('error');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showStatus('error');
+            });
         }
-    })
-    .catch(error => {
-        console.error('Error:', error);
-        document.getElementById('form-container').style.display = 'none';
-        document.getElementById('mensajeError').style.display = 'block';
-    });
-}
     </script>
 </body>
-
 </html>
-
-
-
-
-
