@@ -245,40 +245,68 @@
             };
         };
 
-        function submitForm() {
-            // Deshabilitar botones para evitar doble envío
-            document.getElementById('btnAprobar').disabled = true;
-            document.getElementById('btnRechazar').disabled = true;
+function submitForm() {
+    // Deshabilitar botones para evitar doble envío
+    document.getElementById('btnAprobar').disabled = true;
+    document.getElementById('btnRechazar').disabled = true;
 
-            const webhookURL = 'https://webhook-solsetec.tangara.cloud/webhook/8209b5ad-458f-4140-a034-6f73e01d2db9'; // <-- ¡IMPORTANTE! Pega aquí la URL de tu webhook N8N
-            
-            const form = document.getElementById('decisionForm');
-            const formData = new FormData(form);
-            const data = Object.fromEntries(formData.entries());
+    const webhookURL = 'URL_DE_TU_WEBHOOK_N8N'; // <-- ¡IMPORTANTE! Pega aquí la URL de tu webhook N8N
+    
+    const form = document.getElementById('decisionForm');
+    const formData = new FormData(form);
+    const data = Object.fromEntries(formData.entries());
 
-            fetch(webhookURL, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(data)
-            })
-            .then(response => {
-                if(response.ok) {
+    fetch(webhookURL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+    })
+    .then(response => {
+        if (response.ok) {
+            // La petición fue exitosa (status 200 OK)
+            // Leemos el header 'redirect' de la respuesta del servidor.
+            const redirectTarget = response.headers.get('redirect');
+
+            // Definimos las URLs de destino
+            const baseUrl = 'https://solsetec.github.io/approvalb1/';
+            const urlReused = baseUrl + 'reused.html'; // <-- Ajusta si es necesario
+            const urlApproved = baseUrl + 'approved.html'; // <-- Ajusta si es necesario
+            const urlRejected = baseUrl + 'rejected.html'; // <-- Ajusta si es necesario
+
+            // Usamos un switch para decidir a dónde redirigir
+            switch (redirectTarget) {
+                case 'approved':
+                    window.location.href = urlApproved;
+                    break;
+                case 'rejected':
+                    window.location.href = urlRejected;
+                    break;
+                case 'reused':
+                    window.location.href = urlReused;
+                    break;
+                default:
+                    // Si el header no viene o es un valor inesperado, mostramos un mensaje genérico.
+                    console.log("Header 'redirect' no encontrado o inválido. Mostrando mensaje de éxito genérico.");
                     document.getElementById('form-container').style.display = 'none';
                     document.getElementById('mensajeFinal').style.display = 'block';
-                } else {
-                    document.getElementById('form-container').style.display = 'none';
-                    document.getElementById('mensajeError').style.display = 'block';
-                }
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                document.getElementById('form-container').style.display = 'none';
-                document.getElementById('mensajeError').style.display = 'block';
-            });
+                    break;
+            }
+        } else {
+            // Si hay un error del servidor, lo mostramos
+            document.getElementById('form-container').style.display = 'none';
+            document.getElementById('mensajeError').style.display = 'block';
         }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        document.getElementById('form-container').style.display = 'none';
+        document.getElementById('mensajeError').style.display = 'block';
+    });
+}
     </script>
 </body>
 
 </html>
+
 
 
