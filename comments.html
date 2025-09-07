@@ -269,9 +269,10 @@ function submitForm() {
 
             // Definimos las URLs de destino
             const baseUrl = 'https://solsetec.github.io/approvalb1/';
-            const urlReused = baseUrl + 'reused.html'; // <-- Ajusta si es necesario
-            const urlApproved = baseUrl + 'approved.html'; // <-- Ajusta si es necesario
-            const urlRejected = baseUrl + 'rejected.html'; // <-- Ajusta si es necesario
+            const urlReused = baseUrl + 'reused.html';
+            const urlApproved = baseUrl + 'approved.html';
+            const urlRejected = baseUrl + 'rejected.html';
+            const urlInvalidToken = baseUrl + 'invalidtoken.html'; // <-- Nueva URL para el token inválido
 
             // Usamos un switch para decidir a dónde redirigir
             switch (redirectTarget) {
@@ -283,6 +284,9 @@ function submitForm() {
                     break;
                 case 'reused':
                     window.location.href = urlReused;
+                    break;
+                case 'invalidtoken': // <-- Nuevo caso para manejar el token inválido
+                    window.location.href = urlInvalidToken;
                     break;
                 default:
                     // Si el header no viene o es un valor inesperado, mostramos un mensaje genérico.
@@ -307,6 +311,7 @@ function submitForm() {
 </body>
 
 </html>
+
 
 
 
