@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Confirmar Decisión</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: #f9fafb;
+            color: #1f2937;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            padding: 2rem;
+            text-align: center;
+        }
+
+        .card {
+            background: #ffffff;
+            border-radius: 12px;
+            box-shadow: 0 4px M20px rgba(0, 0, 0, 0.05);
+            padding: 2rem 3rem;
+            max-width: 500px;
+            width: 100%;
+            animation: fadeIn 0.8s ease-out both;
+        }
+
+        .card h1 {
+            font-size: 1.8rem;
+            font-weight: 600;
+            margin: 1rem 0 0.5rem;
+            color: #1f2937; /* Color de título principal */
+        }
+
+        .card p {
+            font-size: 1rem;
+            color: #4b5563;
+            margin-bottom: 1.5rem;
+        }
+
+        .icon {
+            width: 60px;
+            height: 60px;
+            margin: 0 auto;
+        }
+
+        .icon svg {
+            width: 100%;
+            height: 100%;
+            stroke-width: 1.5;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+            animation: pop 0.4s ease-out 0.2s both;
+            stroke: #3b82f6; /* Color de icono principal (azul) */
+        }
+        
+        /* --- ESTILOS PARA EL FORMULARIO --- */
+        
+        form {
+            text-align: left;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+            color: #374151;
+        }
+        
+        textarea {
+            width: 100%;
+            min-height: 120px;
+            padding: 0.75rem;
+            border: 1px solid #d1d5db;
+            border-radius: 8px;
+            font-family: 'Inter', sans-serif;
+            font-size: 1rem;
+            resize: vertical;
+            margin-bottom: 1.5rem;
+        }
+        
+        .button-group {
+            display: flex;
+            gap: 1rem;
+            justify-content: space-between;
+        }
+
+        .btn {
+            flex-grow: 1;
+            padding: 0.75rem 1rem;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+
+        .btn-approve {
+            background-color: #10b981; /* Verde */
+            color: white;
+        }
+        
+        .btn-reject {
+            background-color: #ef4444; /* Rojo */
+            color: white;
+        }
+        
+        /* --- ANIMACIONES Y MEDIA QUERIES --- */
+        
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes pop {
+            0% {
+                transform: scale(0.7);
+                opacity: 0;
+            }
+            100% {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .card {
+                padding: 1.5rem 1.2rem;
+            }
+            .card h1 {
+                font-size: 1.5rem;
+            }
+            .card p {
+                font-size: 0.95rem;
+            }
+            .button-group {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <div id="form-container">
+            <div class="icon" id="form-icon">
+                <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                </svg>
+            </div>
+            <h1 id="card-title">Confirmar Decisión</h1>
+            <p id="card-subtitle">Por favor, añada un comentario si es necesario y confirme su elección.</p>
+            
+            <form id="decisionForm" method="POST" onsubmit="return false;">
+                <label for="comentario">Comentario (opcional):</label>
+                <textarea id="comentario" name="comentario" placeholder="Añada aquí sus observaciones..."></textarea>
+                
+                <input type="hidden" id="token" name="token">
+                <input type="hidden" id="decision" name="decision">
+
+                <div class="button-group">
+                    <button type="button" id="btnAprobar" class="btn btn-approve">Confirmar Aprobación</button>
+                    <button type="button" id="btnRechazar" class="btn btn-reject">Confirmar Rechazo</button>
+                </div>
+            </form>
+        </div>
+        
+        <div id="mensajeFinal" style="display:none;">
+            <div class="icon" id="success-icon">
+                <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" style="stroke: #10b981;">
+                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                 </svg>
+            </div>
+            <h1>¡Gracias!</h1>
+            <p>Tu respuesta ha sido registrada correctamente. Ya puedes cerrar esta ventana.</p>
+        </div>
+        
+        <div id="mensajeError" style="display:none;">
+            <div class="icon" id="error-icon">
+                <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" style="stroke: #f59e0b;">
+                    <path d="M12 9v2m0 4h.01M10.29 3.86l-8 14A1 1 0 003 19h18a1 1 0 00.87-1.5l-8-14a1 1 0 00-1.74 0z"/>
+                </svg>
+            </div>
+             <h1>Error</h1>
+             <p>No se pudo procesar tu solicitud. Por favor, contacta al administrador.</p>
+        </div>
+
+    </div>
+
+    <script>
+        window.onload = function() {
+            const params = new URLSearchParams(window.location.search);
+            const token = params.get('token');
+            const decisionInicial = params.get('decision_inicial');
+
+            if (!token) {
+                document.getElementById('form-container').style.display = 'none';
+                const errorMsg = document.getElementById('mensajeError');
+                errorMsg.style.display = 'block';
+                errorMsg.querySelector('p').innerText = "Falta el token de autorización. Este enlace es inválido.";
+                return;
+            }
+
+            document.getElementById('token').value = token;
+            
+            const cardTitle = document.getElementById('card-title');
+            const btnAprobar = document.getElementById('btnAprobar');
+            const btnRechazar = document.getElementById('btnRechazar');
+            
+            if (decisionInicial === 'aprobado') {
+                cardTitle.innerText = 'Confirmar Aprobación';
+                btnRechazar.style.opacity = '0.6'; // Atenúa el botón no seleccionado
+            } else if (decisionInicial === 'rechazado') {
+                cardTitle.innerText = 'Confirmar Rechazo';
+                btnAprobar.style.opacity = '0.6'; // Atenúa el botón no seleccionado
+            }
+            
+            btnAprobar.onclick = function() {
+                document.getElementById('decision').value = 'aprobado';
+                submitForm();
+            };
+            
+            btnRechazar.onclick = function() {
+                document.getElementById('decision').value = 'rechazado';
+                submitForm();
+            };
+        };
+
+        function submitForm() {
+            // Deshabilitar botones para evitar doble envío
+            document.getElementById('btnAprobar').disabled = true;
+            document.getElementById('btnRechazar').disabled = true;
+
+            const webhookURL = 'URL_DE_TU_WEBHOOK_N8N'; // <-- ¡IMPORTANTE! Pega aquí la URL de tu webhook N8N
+            
+            const form = document.getElementById('decisionForm');
+            const formData = new FormData(form);
+            const data = Object.fromEntries(formData.entries());
+
+            fetch(webhookURL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            })
+            .then(response => {
+                if(response.ok) {
+                    document.getElementById('form-container').style.display = 'none';
+                    document.getElementById('mensajeFinal').style.display = 'block';
+                } else {
+                    document.getElementById('form-container').style.display = 'none';
+                    document.getElementById('mensajeError').style.display = 'block';
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                document.getElementById('form-container').style.display = 'none';
+                document.getElementById('mensajeError').style.display = 'block';
+            });
+        }
+    </script>
+</body>
+</html>
