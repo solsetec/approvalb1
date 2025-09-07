@@ -226,21 +226,21 @@
             const btnAprobar = document.getElementById('btnAprobar');
             const btnRechazar = document.getElementById('btnRechazar');
             
-            if (decisionInicial === 'aprobado') {
+            if (decisionInicial === 'approved') {
                 cardTitle.innerText = 'Confirmar Aprobación';
                 btnRechazar.style.opacity = '0.6'; // Atenúa el botón no seleccionado
-            } else if (decisionInicial === 'rechazado') {
+            } else if (decisionInicial === 'rejected') {
                 cardTitle.innerText = 'Confirmar Rechazo';
                 btnAprobar.style.opacity = '0.6'; // Atenúa el botón no seleccionado
             }
             
             btnAprobar.onclick = function() {
-                document.getElementById('decision').value = 'aprobado';
+                document.getElementById('decision').value = 'approved';
                 submitForm();
             };
             
             btnRechazar.onclick = function() {
-                document.getElementById('decision').value = 'rechazado';
+                document.getElementById('decision').value = 'rejected';
                 submitForm();
             };
         };
@@ -280,4 +280,5 @@
 </body>
 
 </html>
+
 
