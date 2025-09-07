@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Confirmar Decisión</title>
+    <title>Confirmar DecisiÃ³n</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
     <style>
         * {
@@ -38,7 +38,7 @@
             font-size: 1.8rem;
             font-weight: 600;
             margin: 1rem 0 0.5rem;
-            color: #1f2937; /* Color de título principal */
+            color: #1f2937; /* Color de tÃ­tulo principal */
         }
 
         .card p {
@@ -167,18 +167,18 @@
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                 </svg>
             </div>
-            <h1 id="card-title">Confirmar Decisión</h1>
-            <p id="card-subtitle">Por favor, añada un comentario si es necesario y confirme su elección.</p>
+            <h1 id="card-title">Confirmar DecisiÃ³n</h1>
+            <p id="card-subtitle">Por favor, aÃ±ada un comentario si es necesario y confirme su elecciÃ³n.</p>
             
             <form id="decisionForm" method="POST" onsubmit="return false;">
                 <label for="comentario">Comentario (opcional):</label>
-                <textarea id="comentario" name="comentario" placeholder="Añada aquí sus observaciones..."></textarea>
+                <textarea id="comentario" name="comentario" placeholder="AÃ±ada aquÃ­ sus observaciones..."></textarea>
                 
                 <input type="hidden" id="token" name="token">
                 <input type="hidden" id="decision" name="decision">
 
                 <div class="button-group">
-                    <button type="button" id="btnAprobar" class="btn btn-approve">Confirmar Aprobación</button>
+                    <button type="button" id="btnAprobar" class="btn btn-approve">Confirmar AprobaciÃ³n</button>
                     <button type="button" id="btnRechazar" class="btn btn-reject">Confirmar Rechazo</button>
                 </div>
             </form>
@@ -190,7 +190,7 @@
                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                  </svg>
             </div>
-            <h1>¡Gracias!</h1>
+            <h1>Â¡Gracias!</h1>
             <p>Tu respuesta ha sido registrada correctamente. Ya puedes cerrar esta ventana.</p>
         </div>
         
@@ -216,7 +216,7 @@
                 document.getElementById('form-container').style.display = 'none';
                 const errorMsg = document.getElementById('mensajeError');
                 errorMsg.style.display = 'block';
-                errorMsg.querySelector('p').innerText = "Falta el token de autorización. Este enlace es inválido.";
+                errorMsg.querySelector('p').innerText = "Falta el token de autorizaciÃ³n. Este enlace es invÃ¡lido.";
                 return;
             }
 
@@ -227,11 +227,11 @@
             const btnRechazar = document.getElementById('btnRechazar');
             
             if (decisionInicial === 'aprobado') {
-                cardTitle.innerText = 'Confirmar Aprobación';
-                btnRechazar.style.opacity = '0.6'; // Atenúa el botón no seleccionado
+                cardTitle.innerText = 'Confirmar AprobaciÃ³n';
+                btnRechazar.style.opacity = '0.6'; // AtenÃºa el botÃ³n no seleccionado
             } else if (decisionInicial === 'rechazado') {
                 cardTitle.innerText = 'Confirmar Rechazo';
-                btnAprobar.style.opacity = '0.6'; // Atenúa el botón no seleccionado
+                btnAprobar.style.opacity = '0.6'; // AtenÃºa el botÃ³n no seleccionado
             }
             
             btnAprobar.onclick = function() {
@@ -246,11 +246,11 @@
         };
 
         function submitForm() {
-            // Deshabilitar botones para evitar doble envío
+            // Deshabilitar botones para evitar doble envÃ­o
             document.getElementById('btnAprobar').disabled = true;
             document.getElementById('btnRechazar').disabled = true;
 
-            const webhookURL = 'URL_DE_TU_WEBHOOK_N8N'; // <-- ¡IMPORTANTE! Pega aquí la URL de tu webhook N8N
+            const webhookURL = 'https://webhook-solsetec.tangara.cloud/webhook/8209b5ad-458f-4140-a034-6f73e01d2db9/8209b5ad-458f-4140-a034-6f73e01d2db9'; // <-- Â¡IMPORTANTE! Pega aquÃ­ la URL de tu webhook N8N
             
             const form = document.getElementById('decisionForm');
             const formData = new FormData(form);
@@ -278,4 +278,5 @@
         }
     </script>
 </body>
+
 </html>
