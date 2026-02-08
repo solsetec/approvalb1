@@ -1,0 +1,456 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Confirmar Decisión</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: #f9fafb;
+            color: #1f2937;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            padding: 2rem;
+            text-align: center;
+        }
+
+        .card {
+            background: #ffffff;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+            padding: 2rem 3rem;
+            max-width: 500px;
+            width: 100%;
+            animation: fadeIn 0.8s ease-out both;
+        }
+
+        .card h1 {
+            font-size: 1.8rem;
+            font-weight: 600;
+            margin: 1rem 0 0.5rem;
+            color: #1f2937;
+        }
+
+        .card p {
+            font-size: 1rem;
+            color: #4b5563;
+            margin-bottom: 1.5rem;
+        }
+
+        .icon {
+            width: 60px;
+            height: 60px;
+            margin: 0 auto;
+        }
+
+        .icon svg {
+            width: 100%;
+            height: 100%;
+            stroke-width: 1.5;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+            animation: pop 0.4s ease-out 0.2s both;
+            stroke: #3b82f6;
+        }
+        
+        /* Loading spinner */
+        .spinner {
+            border: 3px solid #f3f4f6;
+            border-top: 3px solid #3b82f6;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        /* --- ESTILOS PARA EL FORMULARIO --- */
+        
+        form {
+            text-align: left;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+            color: #374151;
+        }
+        
+        label .required {
+            color: #ef4444;
+        }
+        
+        textarea {
+            width: 100%;
+            min-height: 120px;
+            padding: 0.75rem;
+            border: 1px solid #d1d5db;
+            border-radius: 8px;
+            font-family: 'Inter', sans-serif;
+            font-size: 1rem;
+            resize: vertical;
+            margin-bottom: 1.5rem;
+        }
+        
+        textarea.error {
+            border-color: #ef4444;
+        }
+        
+        .error-message {
+            color: #ef4444;
+            font-size: 0.875rem;
+            margin-top: -1rem;
+            margin-bottom: 1rem;
+        }
+        
+        .button-group {
+            display: flex;
+            gap: 1rem;
+            justify-content: space-between;
+        }
+
+        .btn {
+            flex-grow: 1;
+            padding: 0.75rem 1rem;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .btn-approve {
+            background-color: #10b981;
+            color: white;
+        }
+        
+        .btn-reject {
+            background-color: #ef4444;
+            color: white;
+        }
+
+        /* --- ESTILOS DE ESTADO --- */
+        
+        .card.approved h1 {
+            color: #10b981;
+        }
+        .card.rejected h1 {
+            color: #ef4444;
+        }
+        .card.reused h1,
+        .card.error h1,
+        .card.invalid-token h1 {
+            color: #f59e0b;
+        }
+        .card.loading h1 {
+            color: #3b82f6;
+        }
+
+        .card.approved .icon svg {
+            stroke: #10b981;
+        }
+        .card.rejected .icon svg {
+            stroke: #ef4444;
+        }
+        .card.reused .icon svg,
+        .card.error .icon svg,
+        .card.invalid-token .icon svg {
+            stroke: #f59e0b;
+        }
+        .card.loading .icon svg {
+            stroke: #3b82f6;
+        }
+
+        /* --- ANIMACIONES Y MEDIA QUERIES --- */
+        
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes pop {
+            0% {
+                transform: scale(0.7);
+                opacity: 0;
+            }
+            100% {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .card {
+                padding: 1.5rem 1.2rem;
+            }
+            .card h1 {
+                font-size: 1.5rem;
+            }
+            .card p {
+                font-size: 0.95rem;
+            }
+            .button-group {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="card" id="main-card">
+        <!-- Loading screen -->
+        <div id="loading-container">
+            <div class="icon">
+                <div class="spinner"></div>
+            </div>
+            <h1>Procesando...</h1>
+            <p>Un momento por favor.</p>
+        </div>
+        
+        <!-- Form container -->
+        <div id="form-container" style="display:none;">
+            <div class="icon" id="form-icon">
+                <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                </svg>
+            </div>
+            <h1 id="card-title">Confirmar Decisión</h1>
+            <p id="card-subtitle">Por favor, añada un comentario y confirme su elección.</p>
+            
+            <form id="decisionForm" method="POST" onsubmit="return false;">
+                <label for="comentario">
+                    Comentario <span class="required" id="required-indicator" style="display:none;">*</span>:
+                </label>
+                <textarea id="comentario" name="comentario" placeholder="Añada aquí sus observaciones..."></textarea>
+                <div class="error-message" id="comment-error" style="display:none;">El comentario es obligatorio.</div>
+                
+                <input type="hidden" id="token" name="token">
+                <input type="hidden" id="decision" name="decision">
+
+                <div class="button-group">
+                    <button type="button" id="btnAprobar" class="btn btn-approve">Confirmar Aprobación</button>
+                    <button type="button" id="btnRechazar" class="btn btn-reject">Confirmar Rechazo</button>
+                </div>
+            </form>
+        </div>
+        
+        <!-- Status container -->
+        <div id="status-container" style="display:none;">
+            <div class="icon" id="status-icon"></div>
+            <h1 id="status-title"></h1>
+            <p id="status-message"></p>
+        </div>
+    </div>
+
+    <script>
+        const statusSVGs = {
+            approved: '<svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path d="M5 13l4 4L19 7" /></svg>',
+            rejected: '<svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path d="M6 18L18 6M6 6l12 12" /></svg>',
+            reused: '<svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path d="M12 9v2m0 4h.01M10.29 3.86l-8 14A1 1 0 003 19h18a1 1 0 00.87-1.5l-8-14a1 1 0 00-1.74 0z"/></svg>',
+            invalidtoken: '<svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path d="M12 9v2m0 4h.01M10.29 3.86l-8 14A1 1 0 003 19h18a1 1 0 00.87-1.5l-8-14a1 1 0 00-1.74 0z"/></svg>',
+            error: '<svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path d="M12 9v2m0 4h.01M10.29 3.86l-8 14A1 1 0 003 19h18a1 1 0 00.87-1.5l-8-14a1 1 0 00-1.74 0z"/></svg>'
+        };
+
+        const statusMessages = {
+            approved: { title: '¡Documento aprobado correctamente!', message: 'Tu respuesta ha sido registrada. Puedes cerrar esta pestaña.' },
+            rejected: { title: '¡Documento rechazado!', message: 'Tu respuesta ha sido registrada. Puedes cerrar esta pestaña.' },
+            reused: { title: 'Enlace ya utilizado', message: 'Esta solicitud ya ha sido procesada. Ya no se puede tomar una decisión.' },
+            invalidtoken: { title: 'Enlace inválido', message: 'El token de autorización es incorrecto o ha expirado. Por favor, verifica el enlace.' },
+            error: { title: 'Error', message: 'No se pudo procesar tu solicitud. Por favor, contacta al administrador.' }
+        };
+
+        function showStatus(status) {
+            const loadingContainer = document.getElementById('loading-container');
+            const formContainer = document.getElementById('form-container');
+            const statusContainer = document.getElementById('status-container');
+            const mainCard = document.getElementById('main-card');
+
+            loadingContainer.style.display = 'none';
+            formContainer.style.display = 'none';
+            statusContainer.style.display = 'block';
+
+            mainCard.classList.add(status);
+            
+            const statusTitle = document.getElementById('status-title');
+            const statusMessage = document.getElementById('status-message');
+            const statusIcon = document.getElementById('status-icon');
+
+            statusTitle.innerText = statusMessages[status].title;
+            statusMessage.innerText = statusMessages[status].message;
+            statusIcon.innerHTML = statusSVGs[status];
+        }
+
+        function showForm(requiresComment) {
+            const loadingContainer = document.getElementById('loading-container');
+            const formContainer = document.getElementById('form-container');
+            
+            loadingContainer.style.display = 'none';
+            formContainer.style.display = 'block';
+            
+            if (requiresComment) {
+                document.getElementById('required-indicator').style.display = 'inline';
+                document.getElementById('card-subtitle').innerText = 'Por favor, añada un comentario obligatorio y confirme su elección.';
+            }
+        }
+
+        function requiresComment(requiredMode, decision) {
+            if (requiredMode === 'none') return false;
+            if (requiredMode === 'both') return true;
+            if (requiredMode === 'approved' && decision === 'approved') return true;
+            if (requiredMode === 'rejected' && decision === 'rejected') return true;
+            return false;
+        }
+
+        function buildWebhookURL(prefix) {
+            // Construir la URL dinámica basada en el prefijo
+            return `https://webhook-${prefix}.tangara.cloud/webhook/8209b5ad-458f-4140-a034-6f73e01d2db9`;
+        }
+
+        async function submitDecision(webhookURL, token, decision, comentario = '') {
+            try {
+                const response = await fetch(webhookURL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        token: token,
+                        decision: decision,
+                        comentario: comentario
+                    })
+                });
+
+                if (response.ok) {
+                    const redirectTarget = response.headers.get('redirect');
+                    showStatus(redirectTarget || decision);
+                } else {
+                    showStatus('error');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                showStatus('error');
+            }
+        }
+
+        window.onload = async function() {
+            const params = new URLSearchParams(window.location.search);
+            const token = params.get('token');
+            const decisionInicial = params.get('decision_inicial');
+            const prefix = params.get('prf');
+            const requiredMode = params.get('rcm') || 'none';
+
+            // Validar parámetros obligatorios
+            if (!token || !decisionInicial || !prefix) {
+                showStatus('invalidtoken');
+                return;
+            }
+            
+            if (decisionInicial !== 'approved' && decisionInicial !== 'rejected') {
+                showStatus('invalidtoken');
+                return;
+            }
+
+            // Validar que rcm tenga un valor válido
+            const validModes = ['none', 'approved', 'rejected', 'both'];
+            if (!validModes.includes(requiredMode)) {
+                showStatus('invalidtoken');
+                return;
+            }
+
+            document.getElementById('token').value = token;
+
+            // Construir la URL del webhook
+            const webhookURL = buildWebhookURL(prefix);
+            
+            // Determinar si necesitamos mostrar el formulario
+            const needsComment = requiresComment(requiredMode, decisionInicial);
+
+            if (!needsComment) {
+                // Enviar directamente al backend sin mostrar formulario
+                await submitDecision(webhookURL, token, decisionInicial, '');
+            } else {
+                // Mostrar formulario de comentarios
+                showForm(true);
+                
+                const cardTitle = document.getElementById('card-title');
+                const btnAprobar = document.getElementById('btnAprobar');
+                const btnRechazar = document.getElementById('btnRechazar');
+                
+                if (decisionInicial === 'approved') {
+                    cardTitle.innerText = 'Confirmar Aprobación';
+                    btnRechazar.style.opacity = '0.6';
+                } else if (decisionInicial === 'rejected') {
+                    cardTitle.innerText = 'Confirmar Rechazo';
+                    btnAprobar.style.opacity = '0.6';
+                }
+                
+                btnAprobar.onclick = function() {
+                    document.getElementById('decision').value = 'approved';
+                    validateAndSubmit(webhookURL, requiredMode, 'approved');
+                };
+                
+                btnRechazar.onclick = function() {
+                    document.getElementById('decision').value = 'rejected';
+                    validateAndSubmit(webhookURL, requiredMode, 'rejected');
+                };
+            }
+        };
+
+        function validateAndSubmit(webhookURL, requiredMode, decision) {
+            const comentario = document.getElementById('comentario').value.trim();
+            const comentarioField = document.getElementById('comentario');
+            const errorMessage = document.getElementById('comment-error');
+            
+            // Validar si se requiere comentario para esta decisión
+            if (requiresComment(requiredMode, decision) && !comentario) {
+                comentarioField.classList.add('error');
+                errorMessage.style.display = 'block';
+                return;
+            }
+            
+            // Limpiar errores
+            comentarioField.classList.remove('error');
+            errorMessage.style.display = 'none';
+            
+            // Deshabilitar botones
+            document.getElementById('btnAprobar').disabled = true;
+            document.getElementById('btnRechazar').disabled = true;
+
+            const token = document.getElementById('token').value;
+            submitDecision(webhookURL, token, decision, comentario);
+        }
+    </script>
+</body>
+
+</html>
+
