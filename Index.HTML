@@ -50,22 +50,32 @@
 
         // Simulación de validación y carga de datos
 async function loadContent() {
-    const initData = tg.initData; // El string crudo que Telegram genera
+    // Aseguramos que Telegram esté listo
+    tg.ready();
+
+    const initData = tg.initData; 
+
+    if (!initData) {
+        console.error("No se pudo obtener initData de Telegram");
+        return;
+    }
 
     try {
         const response = await fetch('https://webhook-solsetec.tangara.cloud/webhook/telegram', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: { 
+                'Content-Type': 'application/json' 
+            },
             body: JSON.stringify({ _auth: initData }) 
         });
 
         const data = await response.json();
-        renderFiles(data.allowedFiles); // Función para dibujar los botones
+        console.log("Respuesta del servidor:", data);
+        // Aquí llamarías a tu función para renderizar los PDF
     } catch (error) {
-        tg.showAlert("Error al validar permisos.");
+        console.error("Error en la petición:", error);
     }
 }
-
         function download(fileName) {
             tg.showConfirm(`¿Quieres descargar ${fileName}?`, (confirmed) => {
                 if (confirmed) {
