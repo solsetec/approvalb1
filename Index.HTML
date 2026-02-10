@@ -51,32 +51,27 @@
 async function loadContent() {
     tg.ready();
 
-    // 1. Obtener parámetros de la URL
+    // 1. Extraer el token de la URL del navegador
     const urlParams = new URLSearchParams(window.location.search);
-    const folder = urlParams.get('folder'); // Ejemplo: "mensuales"
-    const userType = urlParams.get('user_type');
+    const tokenDinamico = urlParams.get('token'); 
 
-    // 2. Preparar el envío a n8n
     const initData = tg.initData;
 
     try {
         const response = await fetch('https://webhook-solsetec.tangara.cloud/webhook/telegram', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
+            // 2. Enviamos AMBOS datos en el body
             body: JSON.stringify({ 
                 _auth: initData,
-                payload: {
-                    folder: folder,
-                    action: "list_files",
-                    extra_info: userType
-                }
+                token: tokenDinamico 
             }) 
         });
 
         const data = await response.json();
-        renderFiles(data.allowedFiles);
+        // Lógica para mostrar tus PDFs...
     } catch (error) {
-        console.error("Error:", error);
+        console.error("Error enviando datos:", error);
     }
 }
         function download(fileName) {
