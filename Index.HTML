@@ -20,11 +20,21 @@
             padding: 15px; border-radius: 10px; margin-bottom: 10px;
             display: flex; justify-content: space-between; align-items: center;
         }
-        button {
-            background-color: var(--tg-theme-button-color, #2481cc);
-            color: var(--tg-theme-button-text-color, #ffffff);
-            border: none; padding: 8px 15px; border-radius: 5px; cursor: pointer;
-        }
+button {
+    background-color: #2481cc;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 8px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+button:active {
+    transform: scale(0.98);
+    filter: brightness(0.9);
+}
     </style>
 </head>
 <body>
