@@ -74,10 +74,10 @@ async function loadContent() {
         });
 
         const data = await response.json();
+
+        const actualData = Array.isArray(data) ? data[0] : data;
         
-        // Asumiendo que n8n devuelve el objeto que mostraste
-        // Si viene como array [ { email_attachments: [...] } ], usamos data[0]
-        const attachments = data[0]?.email_attachments || [];
+        const attachments = actualData?.email_attachments || [];
         renderFiles(attachments);
 
     } catch (error) {
