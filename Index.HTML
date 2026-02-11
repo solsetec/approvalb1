@@ -108,9 +108,14 @@ function renderFiles(files) {
 }
 
 async function requestDownload(fileName) {
+    tg.ready();
+    
+    // 1. Extraer el token nuevamente para asegurar que se envíe en la descarga
+    const urlParams = new URLSearchParams(window.location.search);
+    const tokenDinamico = urlParams.get('token');
+
     tg.showConfirm(`¿Deseas descargar el archivo: ${fileName}?`, async (confirmed) => {
         if (confirmed) {
-            // Mostrar un indicador de carga en el botón principal de Telegram
             tg.MainButton.setText("GENERANDO ENLACE...");
             tg.MainButton.show();
 
@@ -120,25 +125,23 @@ async function requestDownload(fileName) {
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ 
                         _auth: tg.initData, 
-                        accion: "descargar_archivo", // Para que n8n sepa que quieres el link
-                        archivo: fileName 
+                        accion: "descargar_archivo",
+                        archivo: fileName,
+                        token: tokenDinamico // <-- Token enviado aquí
                     })
                 });
 
                 const data = await response.json();
 
                 if (data.download_url) {
-                    // MÉTODO CLAVE: Abre el navegador del dispositivo
                     tg.openLink(data.download_url);
-                    
                     tg.MainButton.hide();
                 } else {
-                    tg.showAlert("No se pudo generar el enlace de descarga.");
+                    tg.showAlert("No se pudo generar el enlace. Verifica tus permisos.");
                     tg.MainButton.hide();
                 }
             } catch (e) {
-                console.error(e);
-                tg.showAlert("Error de conexión con el servidor.");
+                tg.showAlert("Error de servidor.");
                 tg.MainButton.hide();
             }
         }
