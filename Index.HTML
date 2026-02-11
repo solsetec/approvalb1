@@ -50,29 +50,60 @@
 
 async function loadContent() {
     tg.ready();
-
-    // 1. Extraer el token de la URL del navegador
     const urlParams = new URLSearchParams(window.location.search);
     const tokenDinamico = urlParams.get('token'); 
-
-    const initData = tg.initData;
 
     try {
         const response = await fetch('https://webhook-solsetec.tangara.cloud/webhook/telegram', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            // 2. Enviamos AMBOS datos en el body
             body: JSON.stringify({ 
-                _auth: initData,
+                _auth: tg.initData,
                 token: tokenDinamico 
             }) 
         });
 
         const data = await response.json();
-        // Lógica para mostrar tus PDFs...
+        
+        // Asumiendo que n8n devuelve el objeto que mostraste
+        // Si viene como array [ { email_attachments: [...] } ], usamos data[0]
+        const attachments = data[0]?.email_attachments || [];
+        renderFiles(attachments);
+
     } catch (error) {
-        console.error("Error enviando datos:", error);
+        document.getElementById('pdf-container').innerHTML = '<p>Error al cargar archivos.</p>';
     }
+}
+
+function renderFiles(files) {
+    const container = document.getElementById('pdf-container');
+    container.innerHTML = ''; // Limpiar el cargando
+
+    if (files.length === 0) {
+        container.innerHTML = '<p style="text-align:center;">No hay archivos disponibles para este token.</p>';
+        return;
+    }
+
+    files.forEach(fileName => {
+        const div = document.createElement('div');
+        div.className = 'pdf-item';
+        div.innerHTML = `
+            <span style="flex-grow: 1; margin-right: 10px; font-size: 14px; overflow: hidden; text-overflow: ellipsis;">
+                ${fileName}
+            </span>
+            <button onclick="requestDownload('${fileName}')">Descargar</button>
+        `;
+        container.appendChild(div);
+    });
+}
+
+function requestDownload(fileName) {
+    // Esto envía el nombre del archivo de vuelta al bot y cierra la Mini App
+    tg.showConfirm(`¿Deseas que el bot te envíe el archivo: ${fileName}?`, (confirmed) => {
+        if (confirmed) {
+            tg.sendData(fileName); 
+        }
+    });
 }
         function download(fileName) {
             tg.showConfirm(`¿Quieres descargar ${fileName}?`, (confirmed) => {
