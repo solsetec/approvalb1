@@ -38,7 +38,7 @@ On submit, the form POSTs `{token, decision, comentario}` as JSON to the webhook
 
 ## Webhook failover (Tangara → backup provider)
 
-Tangara is the primary infra provider, but `Index.HTML`, `comments.html`, `test/t_main.html`, and `prod/p_main.html` also have a secondary webhook host (`apb1-b.scalifa.cloud`) mirroring the same endpoint UUID/path. Each of these files defines its own inline `fetchWithFailover(primaryUrl, backupUrl, options, timeoutMs)` (duplicated per file, same pattern as above — no shared JS module) that tries the primary URL with an 8s timeout via `AbortController`, and falls back to a single attempt against the backup URL if the primary throws, times out, or returns a non-2xx response. All call sites use it in place of a bare `fetch(...)`, so `response.ok`/`response.headers.get('redirect')`/`response.json()` usage downstream is unchanged.
+Tangara is the primary infra provider, but `Index.HTML`, `comments.html`, `test/t_main.html`, and `prod/p_main.html` also have a secondary webhook host (`apb1-b.solsetec.com.co`) mirroring the same endpoint UUID/path. Each of these files defines its own inline `fetchWithFailover(primaryUrl, backupUrl, options, timeoutMs)` (duplicated per file, same pattern as above — no shared JS module) that tries the primary URL with an 8s timeout via `AbortController`, and falls back to a single attempt against the backup URL if the primary throws, times out, or returns a non-2xx response. All call sites use it in place of a bare `fetch(...)`, so `response.ok`/`response.headers.get('redirect')`/`response.json()` usage downstream is unchanged.
 
 `dev/d_main.html` intentionally has **no** failover yet — no backup webhook exists for that environment.
 
