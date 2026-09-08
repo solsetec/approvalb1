@@ -338,9 +338,34 @@
             return `https://webhook-${prefix}.tangara.cloud/webhook/8209b5ad-458f-4140-a034-6f73e01d2db9`;
         }
 
+        const BACKUP_URL = 'https://apb1-b.scalifa.cloud/webhook/8209b5ad-458f-4140-a034-6f73e01d2db9';
+
+        async function fetchWithFailover(primaryUrl, backupUrl, options, timeoutMs = 8000) {
+            async function attempt(url) {
+                const controller = new AbortController();
+                const timer = setTimeout(() => controller.abort(), timeoutMs);
+                try {
+                    const response = await fetch(url, { ...options, signal: controller.signal });
+                    if (!response.ok) {
+                        throw new Error(`HTTP ${response.status}`);
+                    }
+                    return response;
+                } finally {
+                    clearTimeout(timer);
+                }
+            }
+
+            try {
+                return await attempt(primaryUrl);
+            } catch (primaryError) {
+                console.warn('Webhook primario falló, usando respaldo:', primaryError);
+                return await attempt(backupUrl);
+            }
+        }
+
         async function submitDecision(webhookURL, token, decision, comentario = '') {
             try {
-                const response = await fetch(webhookURL, {
+                const response = await fetchWithFailover(webhookURL, BACKUP_URL, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({

@@ -225,6 +225,31 @@
     </div>
 
     <script>
+        const BACKUP_URL = 'https://apb1-b.scalifa.cloud/webhook/8209b5ad-458f-4140-a034-6f73e01d2db9';
+
+        async function fetchWithFailover(primaryUrl, backupUrl, options, timeoutMs = 8000) {
+            async function attempt(url) {
+                const controller = new AbortController();
+                const timer = setTimeout(() => controller.abort(), timeoutMs);
+                try {
+                    const response = await fetch(url, { ...options, signal: controller.signal });
+                    if (!response.ok) {
+                        throw new Error(`HTTP ${response.status}`);
+                    }
+                    return response;
+                } finally {
+                    clearTimeout(timer);
+                }
+            }
+
+            try {
+                return await attempt(primaryUrl);
+            } catch (primaryError) {
+                console.warn('Webhook primario falló, usando respaldo:', primaryError);
+                return await attempt(backupUrl);
+            }
+        }
+
         const statusSVGs = {
             approved: '<svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path d="M5 13l4 4L19 7" /></svg>',
             rejected: '<svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path d="M6 18L18 6M6 6l12 12" /></svg>',
@@ -305,7 +330,7 @@
             const formData = new FormData(form);
             const data = Object.fromEntries(formData.entries());
 
-            fetch(webhookURL, {
+            fetchWithFailover(webhookURL, BACKUP_URL, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(data)
