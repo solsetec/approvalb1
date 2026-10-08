@@ -62,7 +62,7 @@
             animation: pop 0.4s ease-out 0.2s both;
             stroke: #3b82f6;
         }
-        
+
         /* Loading spinner */
         .spinner {
             border: 3px solid #f3f4f6;
@@ -73,29 +73,29 @@
             animation: spin 1s linear infinite;
             margin: 0 auto;
         }
-        
+
         @keyframes spin {
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
         }
-        
+
         /* --- ESTILOS PARA EL FORMULARIO --- */
-        
+
         form {
             text-align: left;
         }
-        
+
         label {
             display: block;
             margin-bottom: 0.5rem;
             font-weight: 600;
             color: #374151;
         }
-        
+
         label .required {
             color: #ef4444;
         }
-        
+
         textarea {
             width: 100%;
             min-height: 120px;
@@ -107,18 +107,18 @@
             resize: vertical;
             margin-bottom: 1.5rem;
         }
-        
+
         textarea.error {
             border-color: #ef4444;
         }
-        
+
         .error-message {
             color: #ef4444;
             font-size: 0.875rem;
             margin-top: -1rem;
             margin-bottom: 1rem;
         }
-        
+
         .button-group {
             display: flex;
             gap: 1rem;
@@ -150,14 +150,14 @@
             background-color: #10b981;
             color: white;
         }
-        
+
         .btn-reject {
             background-color: #ef4444;
             color: white;
         }
 
         /* --- ESTILOS DE ESTADO --- */
-        
+
         .card.approved h1 {
             color: #10b981;
         }
@@ -189,7 +189,7 @@
         }
 
         /* --- ANIMACIONES Y MEDIA QUERIES --- */
-        
+
         @keyframes fadeIn {
             from {
                 opacity: 0;
@@ -238,7 +238,7 @@
             <h1>Procesando...</h1>
             <p>Un momento por favor.</p>
         </div>
-        
+
         <!-- Form container -->
         <div id="form-container" style="display:none;">
             <div class="icon" id="form-icon">
@@ -248,14 +248,14 @@
             </div>
             <h1 id="card-title">Confirmar Decisión</h1>
             <p id="card-subtitle">Por favor, añada un comentario y confirme su elección.</p>
-            
+
             <form id="decisionForm" method="POST" onsubmit="return false;">
                 <label for="comentario">
                     Comentario <span class="required" id="required-indicator" style="display:none;">*</span>:
                 </label>
                 <textarea id="comentario" name="comentario" placeholder="Añada aquí sus observaciones..."></textarea>
                 <div class="error-message" id="comment-error" style="display:none;">El comentario es obligatorio.</div>
-                
+
                 <input type="hidden" id="token" name="token">
                 <input type="hidden" id="decision" name="decision">
 
@@ -265,7 +265,7 @@
                 </div>
             </form>
         </div>
-        
+
         <!-- Status container -->
         <div id="status-container" style="display:none;">
             <div class="icon" id="status-icon"></div>
@@ -291,7 +291,13 @@
             error: { title: 'Error', message: 'No se pudo procesar tu solicitud. Por favor, contacta al administrador.' }
         };
 
+        const RELAY_URL = 'https://approvalb1-supabase.scalifa.cloud/functions/v1/decision-relay';
+        const RELAY_TIMEOUT_MS = 60000;
+
+        const BACKUP_URL = 'https://apb1-b.solsetec.com.co/webhook/93fb046c-5a3c-4fe4-bad3-ebdf969546dd';
+
         function showStatus(status) {
+            if (!statusMessages[status]) status = 'error';
             const loadingContainer = document.getElementById('loading-container');
             const formContainer = document.getElementById('form-container');
             const statusContainer = document.getElementById('status-container');
@@ -302,23 +308,16 @@
             statusContainer.style.display = 'block';
 
             mainCard.classList.add(status);
-            
-            const statusTitle = document.getElementById('status-title');
-            const statusMessage = document.getElementById('status-message');
-            const statusIcon = document.getElementById('status-icon');
 
-            statusTitle.innerText = statusMessages[status].title;
-            statusMessage.innerText = statusMessages[status].message;
-            statusIcon.innerHTML = statusSVGs[status];
+            document.getElementById('status-title').innerText = statusMessages[status].title;
+            document.getElementById('status-message').innerText = statusMessages[status].message;
+            document.getElementById('status-icon').innerHTML = statusSVGs[status];
         }
 
         function showForm(requiresComment) {
-            const loadingContainer = document.getElementById('loading-container');
-            const formContainer = document.getElementById('form-container');
-            
-            loadingContainer.style.display = 'none';
-            formContainer.style.display = 'block';
-            
+            document.getElementById('loading-container').style.display = 'none';
+            document.getElementById('form-container').style.display = 'block';
+
             if (requiresComment) {
                 document.getElementById('required-indicator').style.display = 'inline';
                 document.getElementById('card-subtitle').innerText = 'Por favor, añada un comentario obligatorio y confirme su elección.';
@@ -333,57 +332,61 @@
             return false;
         }
 
-        function buildWebhookURL(prefix) {
-            // Construir la URL dinámica basada en el prefijo
-            return `https://webhook-${prefix}.tangara.cloud/webhook/93fb046c-5a3c-4fe4-bad3-ebdf969546dd`;
-        }
-
-        const BACKUP_URL = 'https://apb1-b.solsetec.com.co/webhook/93fb046c-5a3c-4fe4-bad3-ebdf969546dd';
-
-        async function fetchWithFailover(primaryUrl, backupUrl, options, timeoutMs = 20000) {
-            async function attempt(url) {
-                const controller = new AbortController();
-                const timer = setTimeout(() => controller.abort(), timeoutMs);
-                try {
-                    const response = await fetch(url, { ...options, signal: controller.signal });
-                    if (!response.ok) {
-                        throw new Error(`HTTP ${response.status}`);
-                    }
-                    return response;
-                } finally {
-                    clearTimeout(timer);
-                }
-            }
-
+        async function fetchWithTimeout(url, options, timeoutMs) {
+            const controller = new AbortController();
+            const timer = setTimeout(() => controller.abort(), timeoutMs);
             try {
-                return await attempt(primaryUrl);
-            } catch (primaryError) {
-                console.warn('Webhook primario falló, usando respaldo:', primaryError);
-                return await attempt(backupUrl);
+                return await fetch(url, { ...options, signal: controller.signal });
+            } finally {
+                clearTimeout(timer);
             }
         }
 
-        async function submitDecision(webhookURL, token, decision, comentario = '') {
+        function trackOpened(token, decision, prefix) {
             try {
-                const response = await fetchWithFailover(webhookURL, BACKUP_URL, {
+                fetch(RELAY_URL, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        token: token,
-                        decision: decision,
-                        comentario: comentario
-                    })
-                });
+                    body: JSON.stringify({ event: 'opened', token, decision, prefix }),
+                    keepalive: true
+                }).catch(() => {});
+            } catch (e) {}
+        }
 
+        async function submitDirect(token, decision, comentario) {
+            try {
+                const response = await fetchWithTimeout(BACKUP_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ token, decision, comentario })
+                }, 20000);
+                if (response.ok) return response.headers.get('redirect') || decision;
+            } catch (e) {
+                console.warn('Webhook de respaldo falló:', e);
+            }
+            return 'error';
+        }
+
+        async function submitDecision(prefix, token, decision, comentario = '') {
+            let relayResponded = false;
+            try {
+                const response = await fetchWithTimeout(RELAY_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ event: 'submit', token, decision, prefix, comentario })
+                }, RELAY_TIMEOUT_MS);
                 if (response.ok) {
-                    const redirectTarget = response.headers.get('redirect');
-                    showStatus(redirectTarget || decision);
-                } else {
-                    showStatus('error');
+                    relayResponded = true;
+                    const data = await response.json();
+                    showStatus(data.status);
+                    return;
                 }
             } catch (error) {
-                console.error('Error:', error);
-                showStatus('error');
+                console.error('decision-relay no respondió:', error);
+            }
+
+            if (!relayResponded) {
+                showStatus(await submitDirect(token, decision, comentario));
             }
         }
 
@@ -394,18 +397,16 @@
             const prefix = params.get('prf');
             const requiredMode = params.get('rcm') || 'none';
 
-            // Validar parámetros obligatorios
             if (!token || !decisionInicial || !prefix) {
                 showStatus('invalidtoken');
                 return;
             }
-            
+
             if (decisionInicial !== 'approved' && decisionInicial !== 'rejected') {
                 showStatus('invalidtoken');
                 return;
             }
 
-            // Validar que rcm tenga un valor válido
             const validModes = ['none', 'approved', 'rejected', 'both'];
             if (!validModes.includes(requiredMode)) {
                 showStatus('invalidtoken');
@@ -414,23 +415,18 @@
 
             document.getElementById('token').value = token;
 
-            // Construir la URL del webhook
-            const webhookURL = buildWebhookURL(prefix);
-            
-            // Determinar si necesitamos mostrar el formulario
             const needsComment = requiresComment(requiredMode, decisionInicial);
 
             if (!needsComment) {
-                // Enviar directamente al backend sin mostrar formulario
-                await submitDecision(webhookURL, token, decisionInicial, '');
+                await submitDecision(prefix, token, decisionInicial, '');
             } else {
-                // Mostrar formulario de comentarios
+                trackOpened(token, decisionInicial, prefix);
                 showForm(true);
-                
+
                 const cardTitle = document.getElementById('card-title');
                 const btnAprobar = document.getElementById('btnAprobar');
                 const btnRechazar = document.getElementById('btnRechazar');
-                
+
                 if (decisionInicial === 'approved') {
                     cardTitle.innerText = 'Confirmar Aprobación';
                     btnRechazar.style.opacity = '0.6';
@@ -438,44 +434,40 @@
                     cardTitle.innerText = 'Confirmar Rechazo';
                     btnAprobar.style.opacity = '0.6';
                 }
-                
+
                 btnAprobar.onclick = function() {
                     document.getElementById('decision').value = 'approved';
-                    validateAndSubmit(webhookURL, requiredMode, 'approved');
+                    validateAndSubmit(prefix, requiredMode, 'approved');
                 };
-                
+
                 btnRechazar.onclick = function() {
                     document.getElementById('decision').value = 'rejected';
-                    validateAndSubmit(webhookURL, requiredMode, 'rejected');
+                    validateAndSubmit(prefix, requiredMode, 'rejected');
                 };
             }
         };
 
-        function validateAndSubmit(webhookURL, requiredMode, decision) {
-            const comentario = document.getElementById('comentario').value.trim();
+        function validateAndSubmit(prefix, requiredMode, decision) {
             const comentarioField = document.getElementById('comentario');
+            const comentario = comentarioField.value.trim();
             const errorMessage = document.getElementById('comment-error');
-            
-            // Validar si se requiere comentario para esta decisión
+
             if (requiresComment(requiredMode, decision) && !comentario) {
                 comentarioField.classList.add('error');
                 errorMessage.style.display = 'block';
                 return;
             }
-            
-            // Limpiar errores
+
             comentarioField.classList.remove('error');
             errorMessage.style.display = 'none';
-            
-            // Deshabilitar botones
+
             document.getElementById('btnAprobar').disabled = true;
             document.getElementById('btnRechazar').disabled = true;
 
             const token = document.getElementById('token').value;
-            submitDecision(webhookURL, token, decision, comentario);
+            submitDecision(prefix, token, decision, comentario);
         }
     </script>
 </body>
 
 </html>
-
