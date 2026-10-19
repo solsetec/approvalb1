@@ -26,7 +26,7 @@ An approve/reject-with-comment workflow, presumably linked from emails. Driven e
 - `prf` — environment prefix, used to build the webhook host: `` https://webhook-${prf}.tangara.cloud/webhook/<endpoint-uuid> ``.
 - `rcm` — required-comment mode (`none`/`approved`/`rejected`/`both`), controlling when a comment is mandatory before submit.
 
-The outcome is one of five status views (`approved`, `rejected`, `reused`, `invalidtoken`, `error`); how the page submits and learns the outcome differs per file (see "Submission paths" below).
+The outcome is one of six status views (`approved`, `rejected`, `reused`, `expired`, `invalidtoken`, `error`). `reused` = the link was already used; `expired` = the document is no longer available (a newer version/ApprovalID replaced it, so the token was expired); how the page submits and learns the outcome differs per file (see "Submission paths" below).
 
 `comments.html` (repo root) is the older, base version of this form: it uses a hardcoded webhook UUID, has no loading-spinner state, and does not enforce required comments. `test/t_main.html` and `prod/p_main.html` are the newer versions with comment validation and a loading state, each hardcoding a different webhook endpoint UUID for its environment.
 
