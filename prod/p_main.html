@@ -167,7 +167,7 @@
         .card.reused h1,
         .card.expired h1,
         .card.error h1,
-        .card.invalidtoken h1 {
+        .card.invalid-token h1 {
             color: #f59e0b;
         }
         .card.loading h1 {
@@ -183,7 +183,7 @@
         .card.reused .icon svg,
         .card.expired .icon svg,
         .card.error .icon svg,
-        .card.invalidtoken .icon svg {
+        .card.invalid-token .icon svg {
             stroke: #f59e0b;
         }
         .card.loading .icon svg {
@@ -281,7 +281,7 @@
             approved: '<svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path d="M5 13l4 4L19 7" /></svg>',
             rejected: '<svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path d="M6 18L18 6M6 6l12 12" /></svg>',
             reused: '<svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path d="M12 9v2m0 4h.01M10.29 3.86l-8 14A1 1 0 003 19h18a1 1 0 00.87-1.5l-8-14a1 1 0 00-1.74 0z"/></svg>',
-            expired: '<svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path d="M12 8v4l3 2m6-2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>',
+            expired: '<svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path d="M12 9v2m0 4h.01M10.29 3.86l-8 14A1 1 0 003 19h18a1 1 0 00.87-1.5l-8-14a1 1 0 00-1.74 0z"/></svg>',
             invalidtoken: '<svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path d="M12 9v2m0 4h.01M10.29 3.86l-8 14A1 1 0 003 19h18a1 1 0 00.87-1.5l-8-14a1 1 0 00-1.74 0z"/></svg>',
             error: '<svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path d="M12 9v2m0 4h.01M10.29 3.86l-8 14A1 1 0 003 19h18a1 1 0 00.87-1.5l-8-14a1 1 0 00-1.74 0z"/></svg>'
         };
@@ -290,7 +290,7 @@
             approved: { title: '¡Documento aprobado correctamente!', message: 'Tu respuesta ha sido registrada. Puedes cerrar esta pestaña.' },
             rejected: { title: '¡Documento rechazado!', message: 'Tu respuesta ha sido registrada. Puedes cerrar esta pestaña.' },
             reused: { title: 'Enlace ya utilizado', message: 'Esta solicitud ya ha sido procesada. Ya no se puede tomar una decisión.' },
-            expired: { title: 'Documento no disponible', message: 'Este documento fue reemplazado por una versión más reciente. Ya no se puede tomar una decisión sobre esta versión.' },
+            expired: { title: 'Documento no disponible', message: 'Este documento ya no está disponible porque fue modificado y se generó una nueva versión. Si requiere tu decisión, recibirás un nuevo enlace.' },
             invalidtoken: { title: 'Enlace inválido', message: 'El token de autorización es incorrecto o ha expirado. Por favor, verifica el enlace.' },
             error: { title: 'Error', message: 'No se pudo procesar tu solicitud. Por favor, contacta al administrador.' }
         };
