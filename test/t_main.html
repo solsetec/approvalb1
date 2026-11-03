@@ -300,6 +300,18 @@
 
         const BACKUP_URL = 'https://apb1-b.solsetec.com.co/webhook/93fb046c-5a3c-4fe4-bad3-ebdf969546dd';
 
+        // Anti-escáneres de enlaces (antivirus / gateways de correo que abren la página
+        // y pulsan botones antes que el usuario): la decisión nunca se envía al cargar,
+        // solo con un clic real (isTrusted) tras un mínimo de tiempo en pantalla, y solo
+        // la decisión del enlace (el botón contrario no se muestra).
+        const MIN_HUMAN_MS = 1500;
+        const pageLoadedAt = Date.now();
+        let linkDecision = null;
+
+        function isHumanClick(ev) {
+            return !!ev && ev.isTrusted === true && (Date.now() - pageLoadedAt) >= MIN_HUMAN_MS;
+        }
+
         function showStatus(status) {
             if (!statusMessages[status]) status = 'error';
             const loadingContainer = document.getElementById('loading-container');
@@ -318,14 +330,38 @@
             document.getElementById('status-icon').innerHTML = statusSVGs[status];
         }
 
-        function showForm(requiresComment) {
+        function showForm(requiresComment, decision) {
             document.getElementById('loading-container').style.display = 'none';
             document.getElementById('form-container').style.display = 'block';
+
+            const btnAprobar = document.getElementById('btnAprobar');
+            const btnRechazar = document.getElementById('btnRechazar');
+            const approving = decision === 'approved';
+
+            document.getElementById('card-title').innerText = approving ? 'Confirmar Aprobación' : 'Confirmar Rechazo';
+
+            // Solo el botón de la decisión del enlace; el contrario no existe en pantalla.
+            (approving ? btnRechazar : btnAprobar).style.display = 'none';
 
             if (requiresComment) {
                 document.getElementById('required-indicator').style.display = 'inline';
                 document.getElementById('card-subtitle').innerText = 'Por favor, añada un comentario obligatorio y confirme su elección.';
+            } else {
+                // Sin comentario obligatorio: solo se pide confirmar con un clic.
+                document.querySelector('label[for="comentario"]').style.display = 'none';
+                document.getElementById('comentario').style.display = 'none';
+                document.getElementById('card-subtitle').innerText = approving
+                    ? 'Pulse el botón para confirmar la aprobación.'
+                    : 'Pulse el botón para confirmar el rechazo.';
             }
+
+            // Botones inactivos los primeros MIN_HUMAN_MS: un clic automático no pasa.
+            btnAprobar.disabled = true;
+            btnRechazar.disabled = true;
+            setTimeout(function() {
+                btnAprobar.disabled = false;
+                btnRechazar.disabled = false;
+            }, MIN_HUMAN_MS);
         }
 
         function requiresComment(requiredMode, decision) {
@@ -419,39 +455,31 @@
 
             document.getElementById('token').value = token;
 
+            linkDecision = decisionInicial;
             const needsComment = requiresComment(requiredMode, decisionInicial);
 
-            if (!needsComment) {
-                await submitDecision(prefix, token, decisionInicial, '');
-            } else {
-                trackOpened(token, decisionInicial, prefix);
-                showForm(true);
+            // Nunca se envía la decisión al cargar la página (antes se hacía si no había
+            // comentario obligatorio). Siempre se registra "opened" y se pide un clic.
+            trackOpened(token, decisionInicial, prefix);
+            showForm(needsComment, decisionInicial);
 
-                const cardTitle = document.getElementById('card-title');
-                const btnAprobar = document.getElementById('btnAprobar');
-                const btnRechazar = document.getElementById('btnRechazar');
+            document.getElementById('btnAprobar').onclick = function(ev) {
+                if (!isHumanClick(ev)) return;
+                document.getElementById('decision').value = 'approved';
+                validateAndSubmit(prefix, requiredMode, 'approved');
+            };
 
-                if (decisionInicial === 'approved') {
-                    cardTitle.innerText = 'Confirmar Aprobación';
-                    btnRechazar.style.opacity = '0.6';
-                } else if (decisionInicial === 'rejected') {
-                    cardTitle.innerText = 'Confirmar Rechazo';
-                    btnAprobar.style.opacity = '0.6';
-                }
-
-                btnAprobar.onclick = function() {
-                    document.getElementById('decision').value = 'approved';
-                    validateAndSubmit(prefix, requiredMode, 'approved');
-                };
-
-                btnRechazar.onclick = function() {
-                    document.getElementById('decision').value = 'rejected';
-                    validateAndSubmit(prefix, requiredMode, 'rejected');
-                };
-            }
+            document.getElementById('btnRechazar').onclick = function(ev) {
+                if (!isHumanClick(ev)) return;
+                document.getElementById('decision').value = 'rejected';
+                validateAndSubmit(prefix, requiredMode, 'rejected');
+            };
         };
 
         function validateAndSubmit(prefix, requiredMode, decision) {
+            // Defensa extra: solo se acepta la decisión que trae el enlace.
+            if (decision !== linkDecision) return;
+
             const comentarioField = document.getElementById('comentario');
             const comentario = comentarioField.value.trim();
             const errorMessage = document.getElementById('comment-error');
