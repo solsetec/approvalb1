@@ -300,6 +300,22 @@
 
         const BACKUP_URL = 'https://apb1-b.solsetec.com.co/webhook/8209b5ad-458f-4140-a034-6f73e01d2db9';
 
+        // Modo anti-escáneres de enlaces (parámetro `asm` del enlace, que sale de
+        // clients.config.anti_scanner_mode; ausente o "none" = desactivado). Para clientes
+        // cuyo correo tiene antivirus / gateways que abren la página y pulsan botones antes
+        // que el usuario. Con asm=on: la decisión nunca se envía al cargar, solo con un clic
+        // real (isTrusted) tras un mínimo de tiempo en pantalla, y solo la decisión del
+        // enlace (el botón contrario no se muestra). Sin asm: comportamiento clásico.
+        const MIN_HUMAN_MS = 1500;
+        const pageLoadedAt = Date.now();
+        let linkDecision = null;
+        let protectedMode = false;
+
+        function isHumanClick(ev) {
+            if (!protectedMode) return true;
+            return !!ev && ev.isTrusted === true && (Date.now() - pageLoadedAt) >= MIN_HUMAN_MS;
+        }
+
         function showStatus(status) {
             if (!statusMessages[status]) status = 'error';
             const loadingContainer = document.getElementById('loading-container');
@@ -318,13 +334,44 @@
             document.getElementById('status-icon').innerHTML = statusSVGs[status];
         }
 
-        function showForm(requiresComment) {
+        function showForm(requiresComment, decision) {
             document.getElementById('loading-container').style.display = 'none';
             document.getElementById('form-container').style.display = 'block';
+
+            const btnAprobar = document.getElementById('btnAprobar');
+            const btnRechazar = document.getElementById('btnRechazar');
+            const approving = decision === 'approved';
+
+            document.getElementById('card-title').innerText = approving ? 'Confirmar Aprobación' : 'Confirmar Rechazo';
+
+            if (protectedMode) {
+                // Solo el botón de la decisión del enlace; el contrario no existe en pantalla.
+                (approving ? btnRechazar : btnAprobar).style.display = 'none';
+            } else {
+                // Comportamiento clásico: se ven los dos botones y el contrario queda atenuado.
+                (approving ? btnRechazar : btnAprobar).style.opacity = '0.6';
+            }
 
             if (requiresComment) {
                 document.getElementById('required-indicator').style.display = 'inline';
                 document.getElementById('card-subtitle').innerText = 'Por favor, añada un comentario obligatorio y confirme su elección.';
+            } else {
+                // Sin comentario obligatorio: solo se pide confirmar con un clic.
+                document.querySelector('label[for="comentario"]').style.display = 'none';
+                document.getElementById('comentario').style.display = 'none';
+                document.getElementById('card-subtitle').innerText = approving
+                    ? 'Pulse el botón para confirmar la aprobación.'
+                    : 'Pulse el botón para confirmar el rechazo.';
+            }
+
+            if (protectedMode) {
+                // Botones inactivos los primeros MIN_HUMAN_MS: un clic automático no pasa.
+                btnAprobar.disabled = true;
+                btnRechazar.disabled = true;
+                setTimeout(function() {
+                    btnAprobar.disabled = false;
+                    btnRechazar.disabled = false;
+                }, MIN_HUMAN_MS);
             }
         }
 
@@ -419,39 +466,40 @@
 
             document.getElementById('token').value = token;
 
+            linkDecision = decisionInicial;
+            // Cualquier valor distinto de ausente / "none" activa la protección (falla cerrado).
+            protectedMode = (params.get('asm') || 'none') !== 'none';
             const needsComment = requiresComment(requiredMode, decisionInicial);
 
-            if (!needsComment) {
+            // Sin protección y sin comentario obligatorio: comportamiento clásico, la
+            // decisión se envía al cargar.
+            if (!protectedMode && !needsComment) {
                 await submitDecision(prefix, token, decisionInicial, '');
-            } else {
-                trackOpened(token, decisionInicial, prefix);
-                showForm(true);
-
-                const cardTitle = document.getElementById('card-title');
-                const btnAprobar = document.getElementById('btnAprobar');
-                const btnRechazar = document.getElementById('btnRechazar');
-
-                if (decisionInicial === 'approved') {
-                    cardTitle.innerText = 'Confirmar Aprobación';
-                    btnRechazar.style.opacity = '0.6';
-                } else if (decisionInicial === 'rejected') {
-                    cardTitle.innerText = 'Confirmar Rechazo';
-                    btnAprobar.style.opacity = '0.6';
-                }
-
-                btnAprobar.onclick = function() {
-                    document.getElementById('decision').value = 'approved';
-                    validateAndSubmit(prefix, requiredMode, 'approved');
-                };
-
-                btnRechazar.onclick = function() {
-                    document.getElementById('decision').value = 'rejected';
-                    validateAndSubmit(prefix, requiredMode, 'rejected');
-                };
+                return;
             }
+
+            // Con protección nunca se envía la decisión al cargar: se registra "opened"
+            // y se pide un clic.
+            trackOpened(token, decisionInicial, prefix);
+            showForm(needsComment, decisionInicial);
+
+            document.getElementById('btnAprobar').onclick = function(ev) {
+                if (!isHumanClick(ev)) return;
+                document.getElementById('decision').value = 'approved';
+                validateAndSubmit(prefix, requiredMode, 'approved');
+            };
+
+            document.getElementById('btnRechazar').onclick = function(ev) {
+                if (!isHumanClick(ev)) return;
+                document.getElementById('decision').value = 'rejected';
+                validateAndSubmit(prefix, requiredMode, 'rejected');
+            };
         };
 
         function validateAndSubmit(prefix, requiredMode, decision) {
+            // Defensa extra (modo protegido): solo se acepta la decisión que trae el enlace.
+            if (protectedMode && decision !== linkDecision) return;
+
             const comentarioField = document.getElementById('comentario');
             const comentario = comentarioField.value.trim();
             const errorMessage = document.getElementById('comment-error');
