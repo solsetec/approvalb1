@@ -1,4 +1,6 @@
-FROM nginx:1.27-alpine
+FROM nginx:1.31-alpine
+# curl no lo usa nginx y trae CVEs sin parche; el healthcheck de Coolify cae a wget (busybox).
+RUN apk del --no-cache curl
 COPY deploy/nginx.conf /etc/nginx/conf.d/default.conf
 COPY . /usr/share/nginx/html
 RUN rm -rf /usr/share/nginx/html/deploy /usr/share/nginx/html/docs \
