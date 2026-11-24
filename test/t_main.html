@@ -295,10 +295,17 @@
             error: { title: 'Error', message: 'No se pudo procesar tu solicitud. Por favor, contacta al administrador.' }
         };
 
-        const RELAY_URL = 'https://approvalb1-supabase.scalifa.cloud/functions/v1/decision-relay';
+        // Servida desde el VPS de backup (*.solsetec.com.co): el relay y el respaldo van por el
+        // proxy del mismo dominio (deploy/nginx.conf), así el aprobador solo necesita ese dominio/IP.
+        const SAME_ORIGIN_PROXY = window.location.hostname.endsWith('.solsetec.com.co');
+        const RELAY_URL = SAME_ORIGIN_PROXY
+            ? '/relay/decision-relay'
+            : 'https://approvalb1-supabase.scalifa.cloud/functions/v1/decision-relay';
         const RELAY_TIMEOUT_MS = 60000;
 
-        const BACKUP_URL = 'https://apb1-b.solsetec.com.co/webhook/93fb046c-5a3c-4fe4-bad3-ebdf969546dd';
+        const BACKUP_URL = SAME_ORIGIN_PROXY
+            ? '/backup/93fb046c-5a3c-4fe4-bad3-ebdf969546dd'
+            : 'https://apb1-b.solsetec.com.co/webhook/93fb046c-5a3c-4fe4-bad3-ebdf969546dd';
 
         // Modo anti-escáneres de enlaces. Lo decide decision-relay desde
         // clients.config.anti_scanner_mode (nada viaja en la URL, así que no se puede
